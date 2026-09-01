@@ -95,7 +95,7 @@
 ## Feature 5: Delete an item
 
 - **ID:** delete-item
-- **Status:** [ ] pending
+- **Status:** [x] done
 
 **Goal:** `DELETE /items/:id` removes an item.
 
