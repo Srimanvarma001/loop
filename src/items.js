@@ -13,4 +13,15 @@ router.get('/', (req, res) => {
   res.json(items);
 });
 
+router.post('/', (req, res) => {
+  const { title } = req.body || {};
+  if (!title || !title.trim()) {
+    return res.status(400).json({ error: 'Title is required' });
+  }
+  const stmt = db.prepare('INSERT INTO items (title, done) VALUES (?, 0)');
+  const info = stmt.run(title.trim());
+  const item = { id: Number(info.lastInsertRowid), title: title.trim(), done: false };
+  res.status(201).json(item);
+});
+
 export default router;

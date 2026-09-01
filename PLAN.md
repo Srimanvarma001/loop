@@ -53,7 +53,7 @@
 ## Feature 2: Create an item
 
 - **ID:** create-item
-- **Status:** [ ] pending
+- **Status:** [x] done
 
 **Goal:** `POST /items` accepts `{ title }` and creates an item with `done: false`.
 
