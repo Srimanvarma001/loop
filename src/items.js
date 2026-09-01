@@ -36,4 +36,35 @@ router.post('/', (req, res) => {
   res.status(201).json(item);
 });
 
+router.put('/:id', (req, res) => {
+  const { id } = req.params;
+  if (!/^\d+$/.test(id)) {
+    return res.status(400).json({ error: 'Invalid id' });
+  }
+  const existing = db.prepare('SELECT * FROM items WHERE id = ?').get(Number(id));
+  if (!existing) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+
+  const { title, done } = req.body || {};
+  let newTitle = existing.title;
+  let newDone = existing.done === 1;
+
+  if (title !== undefined) {
+    if (typeof title !== 'string' || !title.trim()) {
+      return res.status(400).json({ error: 'Title must be a non-empty string' });
+    }
+    newTitle = title.trim();
+  }
+  if (done !== undefined) {
+    if (typeof done !== 'boolean') {
+      return res.status(400).json({ error: 'Done must be a boolean' });
+    }
+    newDone = done;
+  }
+
+  db.prepare('UPDATE items SET title = ?, done = ? WHERE id = ?').run(newTitle, newDone ? 1 : 0, Number(id));
+  res.json({ id: Number(id), title: newTitle, done: newDone });
+});
+
 export default router;

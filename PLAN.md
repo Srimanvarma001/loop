@@ -81,7 +81,7 @@
 ## Feature 4: Update an item
 
 - **ID:** update-item
-- **Status:** [ ] pending
+- **Status:** [x] done
 
 **Goal:** `PUT /items/:id` updates `title` and/or `done`.
 

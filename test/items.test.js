@@ -54,6 +54,24 @@ function post(path, data) {
   });
 }
 
+function put(path, data) {
+  return new Promise((resolve, reject) => {
+    const body = JSON.stringify(data);
+    const req = http.request(`${baseUrl}${path}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },
+    }, (res) => {
+      let chunks = '';
+      res.on('data', chunk => chunks += chunk);
+      res.on('end', () => {
+        resolve({ status: res.statusCode, body: JSON.parse(chunks) });
+      });
+    });
+    req.on('error', reject);
+    req.end(body);
+  });
+}
+
 describe('GET /items', () => {
   it('returns 200 and empty array when no items exist', async () => {
     const res = await fetch('/items');
@@ -115,6 +133,49 @@ describe('GET /items/:id', () => {
 
   it('returns 400 for a non-numeric id', async () => {
     const res = await fetch('/items/abc');
+    assert.equal(res.status, 400);
+    assert.ok(res.body.error);
+  });
+});
+
+describe('PUT /items/:id', () => {
+  it('updates done field and returns 200 with the updated item', async () => {
+    const created = await post('/items', { title: 'Update done' });
+    assert.equal(created.status, 201);
+    const res = await put(`/items/${created.body.id}`, { done: true });
+    assert.equal(res.status, 200);
+    assert.equal(res.body.id, created.body.id);
+    assert.equal(res.body.title, 'Update done');
+    assert.equal(res.body.done, true);
+  });
+
+  it('update persists in follow-up GET', async () => {
+    const created = await post('/items', { title: 'Persist title' });
+    assert.equal(created.status, 201);
+    const updated = await put(`/items/${created.body.id}`, { title: 'New title' });
+    assert.equal(updated.status, 200);
+    const fetched = await fetch(`/items/${created.body.id}`);
+    assert.equal(fetched.status, 200);
+    assert.equal(fetched.body.title, 'New title');
+  });
+
+  it('updates both title and done in one request', async () => {
+    const created = await post('/items', { title: 'Both fields' });
+    assert.equal(created.status, 201);
+    const res = await put(`/items/${created.body.id}`, { title: 'Updated both', done: true });
+    assert.equal(res.status, 200);
+    assert.equal(res.body.title, 'Updated both');
+    assert.equal(res.body.done, true);
+  });
+
+  it('returns 404 for an unknown id', async () => {
+    const res = await put('/items/999999', { done: true });
+    assert.equal(res.status, 404);
+    assert.deepStrictEqual(res.body, { error: 'Not found' });
+  });
+
+  it('returns 400 for a non-numeric id', async () => {
+    const res = await put('/items/abc', { done: true });
     assert.equal(res.status, 400);
     assert.ok(res.body.error);
   });
