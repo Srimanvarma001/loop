@@ -72,6 +72,21 @@ function put(path, data) {
   });
 }
 
+function del(path) {
+  return new Promise((resolve, reject) => {
+    const req = http.request(`${baseUrl}${path}`, { method: 'DELETE' }, (res) => {
+      let chunks = '';
+      res.on('data', chunk => chunks += chunk);
+      res.on('end', () => {
+        const body = chunks ? JSON.parse(chunks) : null;
+        resolve({ status: res.statusCode, body });
+      });
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
+
 describe('GET /items', () => {
   it('returns 200 and empty array when no items exist', async () => {
     const res = await fetch('/items');
@@ -176,6 +191,47 @@ describe('PUT /items/:id', () => {
 
   it('returns 400 for a non-numeric id', async () => {
     const res = await put('/items/abc', { done: true });
+    assert.equal(res.status, 400);
+    assert.ok(res.body.error);
+  });
+});
+
+describe('DELETE /items/:id', () => {
+  it('deletes an item and returns 204; item is gone from GET /items', async () => {
+    const created = await post('/items', { title: 'Delete me' });
+    assert.equal(created.status, 201);
+    const res = await del(`/items/${created.body.id}`);
+    assert.equal(res.status, 204);
+    const list = await fetch('/items');
+    assert.ok(!list.body.some(i => i.id === created.body.id));
+  });
+
+  it('returns 404 for an unknown id', async () => {
+    const res = await del('/items/999999');
+    assert.equal(res.status, 404);
+    assert.deepStrictEqual(res.body, { error: 'Not found' });
+  });
+
+  it('returns 404 when deleting an already-deleted id', async () => {
+    const created = await post('/items', { title: 'Delete twice' });
+    assert.equal(created.status, 201);
+    const first = await del(`/items/${created.body.id}`);
+    assert.equal(first.status, 204);
+    const second = await del(`/items/${created.body.id}`);
+    assert.equal(second.status, 404);
+  });
+
+  it('deleting the last item leaves an empty list', async () => {
+    const list1 = await fetch('/items');
+    for (const item of list1.body) {
+      await del(`/items/${item.id}`);
+    }
+    const list2 = await fetch('/items');
+    assert.deepStrictEqual(list2.body, []);
+  });
+
+  it('returns 400 for a non-numeric id', async () => {
+    const res = await del('/items/abc');
     assert.equal(res.status, 400);
     assert.ok(res.body.error);
   });

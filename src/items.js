@@ -67,4 +67,17 @@ router.put('/:id', (req, res) => {
   res.json({ id: Number(id), title: newTitle, done: newDone });
 });
 
+router.delete('/:id', (req, res) => {
+  const { id } = req.params;
+  if (!/^\d+$/.test(id)) {
+    return res.status(400).json({ error: 'Invalid id' });
+  }
+  const existing = db.prepare('SELECT * FROM items WHERE id = ?').get(Number(id));
+  if (!existing) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+  db.prepare('DELETE FROM items WHERE id = ?').run(Number(id));
+  res.status(204).end();
+});
+
 export default router;
