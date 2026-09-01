@@ -39,7 +39,7 @@
 ## Feature 1: Scaffold + list items
 
 - **ID:** scaffold-list
-- **Status:** [ ] pending
+- **Status:** [x] done
 
 **Goal:** The project boots and `GET /items` returns the item list (empty to start).
 
