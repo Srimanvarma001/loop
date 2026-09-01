@@ -95,3 +95,27 @@ describe('POST /items', () => {
     assert.ok(res.body.error);
   });
 });
+
+describe('GET /items/:id', () => {
+  it('returns 200 with the item for a valid id', async () => {
+    const created = await post('/items', { title: 'Read item' });
+    assert.equal(created.status, 201);
+    const res = await fetch(`/items/${created.body.id}`);
+    assert.equal(res.status, 200);
+    assert.equal(res.body.id, created.body.id);
+    assert.equal(res.body.title, 'Read item');
+    assert.equal(res.body.done, false);
+  });
+
+  it('returns 404 for an unknown id', async () => {
+    const res = await fetch('/items/999999');
+    assert.equal(res.status, 404);
+    assert.deepStrictEqual(res.body, { error: 'Not found' });
+  });
+
+  it('returns 400 for a non-numeric id', async () => {
+    const res = await fetch('/items/abc');
+    assert.equal(res.status, 400);
+    assert.ok(res.body.error);
+  });
+});

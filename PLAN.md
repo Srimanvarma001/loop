@@ -67,7 +67,7 @@
 ## Feature 3: Read a single item
 
 - **ID:** get-item
-- **Status:** [ ] pending
+- **Status:** [x] done
 
 **Goal:** `GET /items/:id` returns one item by id.
 
